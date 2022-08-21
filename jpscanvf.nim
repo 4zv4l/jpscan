@@ -2,13 +2,13 @@ import strutils, osproc, os, httpclient
 
 proc showLogo() =
   echo "\e[33m"
-  echo "	     ██╗██████╗ ███████╗ ██████╗ █████╗ ███╗   ██╗██╗   ██╗███████╗"
-  echo "	     ██║██╔══██╗██╔════╝██╔════╝██╔══██╗████╗  ██║██║   ██║██╔════╝"
-  echo "	     ██║██████╔╝███████╗██║     ███████║██╔██╗ ██║██║   ██║█████╗  "
-  echo "	██   ██║██╔═══╝ ╚════██║██║     ██╔══██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  "
-  echo "	╚█████╔╝██║     ███████║╚██████╗██║  ██║██║ ╚████║ ╚████╔╝ ██║     "
-  echo "	 ╚════╝ ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝     "
-  echo "         A non official App - Just made by someone for fun           "
+  echo "          ██╗██████╗ ███████╗ ██████╗ █████╗ ███╗   ██╗██╗   ██╗███████╗"
+  echo "          ██║██╔══██╗██╔════╝██╔════╝██╔══██╗████╗  ██║██║   ██║██╔════╝"
+  echo "          ██║██████╔╝███████╗██║     ███████║██╔██╗ ██║██║   ██║█████╗  "
+  echo "     ██   ██║██╔═══╝ ╚════██║██║     ██╔══██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  "
+  echo "     ╚█████╔╝██║     ███████║╚██████╗██║  ██║██║ ╚████║ ╚████╔╝ ██║     "
+  echo "      ╚════╝ ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝     "
+  echo "            A non official App - Just made by someone for fun           "
   echo "\e[0m"
   echo "\n"
 
@@ -26,9 +26,12 @@ proc getDest(): string =
 proc getFolder(path: string): string =
   for kind, path in walkDir(path):
     case kind:
-      of pcDir: echo "    ", path
+      of pcDir:
+        let fn = extractFilename(path)
+        if fn[0] != '.':
+          echo "    ", fn
       else: discard
-  stdout.write "    Quel dossier voulez-vous créer: "
+  stdout.write "    Nom du dossier: "
   readline(stdin)
 
 template showMenu(dest: string) =
@@ -49,7 +52,7 @@ proc getChoice(): uint =
 
 # TODO: get all chapter from folder
 # return list of urls
-proc getInfo(): (string, seq[string]) =
+proc getInfo(): tuple[manga: string, urls: seq[string]] =
   # download all .jpg from the folder
   # url = "https://funquizzes.fun/uploads/manga/{manga}/{chapi}/"
   ("manga", @["url1","url2"])
@@ -68,8 +71,8 @@ proc main() =
         let 
           client = newHttpClient()
           info = getInfo()
-        for url in info[1]:
-          client.downloadFile(url, dest&"/"&info[0]&"/"&extractFilename(url))
+        for url in info.urls:
+          client.downloadFile(url, dest&"/"&info.manga&"/"&extractFilename(url))
         client.close()
       of 2: # add manga folder
         let folder = getFolder(dest)
