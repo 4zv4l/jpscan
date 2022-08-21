@@ -23,7 +23,7 @@ proc getDest(): string =
   readline(stdin)
 
 # ask user for a folder to add/remove
-proc getFolder(path: string): string =
+proc getFolder(path: string) =
   for kind, path in walkDir(path):
     case kind:
       of pcDir:
@@ -31,12 +31,13 @@ proc getFolder(path: string): string =
         if fn[0] != '.':
           echo "    ", fn
       else: discard
-  stdout.write "    Nom du dossier: "
-  readline(stdin)
+  echo ""
 
 template showMenu(dest: string) =
   showLogo()
-  echo "    Chemin vers le dossier: ", dest
+  echo "    Contenu du dossier: ", dest
+  getFolder(dest)
+  echo "    *.....................................*"
   echo "    1. \e[33mChoisir un manga\e[0m"
   echo "    2. \e[32mAjouter un nouveau manga\e[0m"
   echo "    3. \e[31mSupprimer un manga\e[0m"
@@ -75,10 +76,14 @@ proc main() =
           client.downloadFile(url, dest&"/"&info.manga&"/"&extractFilename(url))
         client.close()
       of 2: # add manga folder
-        let folder = getFolder(dest)
+        getFolder(dest)
+        stdout.write "    Dossier a creer: "
+        let folder = readline(stdin)
         createDir(dest&"/"&folder)
       of 3: # remove manga folder
-        let folder = getFolder(dest)
+        getFolder(dest)
+        stdout.write "    Dossier a supprimer: "
+        let folder = readline(stdin)
         removeDir(dest&"/"&folder)
       of 4:
         echo "au revoir :3"
