@@ -8,7 +8,7 @@ proc showLogo() =
   echo "	██   ██║██╔═══╝ ╚════██║██║     ██╔══██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  "
   echo "	╚█████╔╝██║     ███████║╚██████╗██║  ██║██║ ╚████║ ╚████╔╝ ██║     "
   echo "	 ╚════╝ ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝     "
-  echo "		A non official App - Just made by someone for fun                "
+  echo "         A non official App - Just made by someone for fun           "
   echo "\e[0m"
   echo "\n"
 
@@ -47,11 +47,12 @@ proc getChoice(): uint =
   except:
     5
 
-proc getInfo(): (string, string) =
-  let
-    manga = (echo "manga   : "; readline(stdin))
-    chapi = (echo "chapitre: "; readline(stdin))
-  return (manga, chapi)
+# TODO: get all chapter from folder
+# return list of urls
+proc getInfo(): (string, seq[string]) =
+  # download all .jpg from the folder
+  # url = "https://funquizzes.fun/uploads/manga/{manga}/{chapi}/"
+  ("manga", @["url1","url2"])
 
 proc main() =
   clear()
@@ -64,12 +65,11 @@ proc main() =
     c = getChoice()
     case(c):
       of 1: # download manga
-        let
-          (manga, chapi) = getInfo()
-          # download all .jpg from the folder
-          url = "https://funquizzes.fun/uploads/manga/{manga}/{chapi}/"
-        var client = newHttpClient()
-        client.downloadFile(url, dest&"/"&manga)
+        let 
+          client = newHttpClient()
+          info = getInfo()
+        for url in info[1]:
+          client.downloadFile(url, dest&"/"&info[0]&"/"&extractFilename(url))
         client.close()
       of 2: # add manga folder
         let folder = getFolder(dest)
