@@ -8,7 +8,7 @@ proc showLogo() =
   echo "	██   ██║██╔═══╝ ╚════██║██║     ██╔══██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  "
   echo "	╚█████╔╝██║     ███████║╚██████╗██║  ██║██║ ╚████║ ╚████╔╝ ██║     "
   echo "	 ╚════╝ ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚═══╝  ╚═╝     "
-  echo "		A non official App - Just made by someone for fun				         "
+  echo "		A non official App - Just made by someone for fun                "
   echo "\e[0m"
   echo "\n"
 
@@ -63,7 +63,7 @@ proc main() =
     showMenu(dest)
     c = getChoice()
     case(c):
-      of 1:
+      of 1: # download manga
         let
           (manga, chapi) = getInfo()
           # download all .jpg from the folder
@@ -71,10 +71,10 @@ proc main() =
         var client = newHttpClient()
         client.downloadFile(url, dest&"/"&manga)
         client.close()
-      of 2:
+      of 2: # add manga folder
         let folder = getFolder(dest)
         createDir(dest&"/"&folder)
-      of 3:
+      of 3: # remove manga folder
         let folder = getFolder(dest)
         removeDir(dest&"/"&folder)
       of 4:
