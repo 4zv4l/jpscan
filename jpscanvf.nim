@@ -1,4 +1,4 @@
-import strutils, osproc, os, httpclient
+import strutils, osproc, os, httpclient, rdstdin, htmlparser, xmltree, strtabs
 
 proc showLogo() =
   echo "\e[33m"
@@ -19,8 +19,7 @@ proc clear() =
     discard execCmd("clear")
 
 proc getDest(): string =
-  stdout.write "    Chemin vers le dossier: "
-  readline(stdin)
+  readLineFromStdin("    Chemin vers le dossier: ")
 
 # ask user for a folder to add/remove
 proc getFolder(path: string) =
@@ -45,18 +44,37 @@ template showMenu(dest: string) =
 
 # ask user for the menu's choice
 proc getChoice(): uint =
-  stdout.write "    Que voulez-vous faire: "
   try:
-    readline(stdin).parseUInt()
+    readLineFromStdin("    Que voulez-vous faire: ").parseUInt()
   except:
     5
+
+proc fetch(url: string): seq[string] =
+  var client = newHttpClient()
+  let html_code = parseHtml(client.getContent(url))
+  for a in html_code.findAll("a"):
+    result.add(a.attrs["href"])
+
+proc checkStr(s, ss: string): bool =
+  s.contains(ss) or ss.contains(s)
 
 # TODO: get all chapter from folder
 # return list of urls
 proc getInfo(): tuple[manga: string, urls: seq[string]] =
+  echo "Chargement des mangas disponibles..."
+  let mangas = fetch("https://funquizzes.fun/uploads/manga/")
+  let choice = readLineFromStdin("nom du manga: ")
+  var urls: seq[string]
+  var dl_url = seq[string]
+  for manga in mangas:
+    var flag: cint = 1
+    if checkStr(manga, choice):
+      urls.add(manga)
+  for url in urls:
+    dl_url.add("https://funquizzes.fun/uploads/manga/"&url) 
   # download all .jpg from the folder
   # url = "https://funquizzes.fun/uploads/manga/{manga}/{chapi}/"
-  ("manga", @["url1","url2"])
+  (choice, @["url1","url2"])
 
 proc main() =
   clear()
@@ -77,13 +95,11 @@ proc main() =
         client.close()
       of 2: # add manga folder
         getFolder(dest)
-        stdout.write "    Dossier a creer: "
-        let folder = readline(stdin)
+        let folder = readLineFromStdin("    Dossier a creer: ")
         createDir(dest&"/"&folder)
       of 3: # remove manga folder
         getFolder(dest)
-        stdout.write "    Dossier a supprimer: "
-        let folder = readline(stdin)
+        let folder = readLineFromStdin("    Dossier a supprimer: ")
         removeDir(dest&"/"&folder)
       of 4:
         echo "au revoir :3"
