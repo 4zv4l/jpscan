@@ -4,6 +4,6 @@ jpscan in nim
 > Inspired by [SaigoNoo/jpscanvf](https://github.com/SaigoNoo/jpscanvf)
 
 ## Compile
-`nim c -d:release -d:ssl jpscanvf.nim`
+`nim c -d:release jpscanvf.nim`
 
-- [X] Release coming soon
+- [ ] Release coming soon
