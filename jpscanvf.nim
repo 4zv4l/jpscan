@@ -1,15 +1,15 @@
 import strutils, rdstdin, strtabs
 import httpclient, htmlparser, xmltree
-import os, osproc
+import os
 import unicode, uri
 
 const BaseURL = "https://funquizzes.fun/uploads/manga/"
 
 proc clear() =
   when defined(Windows):
-    discard execCmd("cls")
+    discard execShellCmd("cls")
   else:
-    discard execCmd("clear")
+    discard execShellCmd("clear")
 
 proc showLogo() =
   clear()
@@ -143,13 +143,6 @@ proc getInfo(mangas: seq[string]): tuple[name: string, chap: seq[tuple[num: stri
     mc    = concatURLS(manga.url, chapi)
     scans = getScansInfo(manga.name, mc, chapi)
   return (manga.name, scans)
-
-# multiply string
-proc `*`(s: string, num: Natural): string {.noSideEffect} =
-  var res = newStringOfCap(s.len * num)
-  for i in 0..num:
-    res.add(s)
-  return res
 
 # loading bar
 proc loading(min, max: uint) =
