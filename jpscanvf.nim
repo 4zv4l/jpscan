@@ -1,4 +1,4 @@
-import strutils, rdstdin, strtabs, re
+import strutils, rdstdin, strtabs
 import httpclient, htmlparser, xmltree
 import os, osproc
 import unicode, uri
@@ -86,7 +86,7 @@ proc fetchScans(url: string): seq[string] =
   var client = newHttpClient()
   let html_code = parseHtml(client.getContent(url))
   for a in html_code.findAll("a"):
-    if find(a.attrs["href"], re".jpg$") > 0:
+    if a.attrs["href"].contains(".jpg"):
       result.add(a.attrs["href"])
 
 # check str to see if they are similar
