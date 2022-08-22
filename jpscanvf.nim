@@ -68,7 +68,7 @@ proc menu(dest: string): uint =
 
 # fetch every manga from the website
 proc fetchManga(): seq[string] =
-  echo "Chargement des mangas disponibles..."
+  echo "    Chargement des mangas disponibles..."
   var client = newHttpClient()
   let html_code = parseHtml(client.getContent(BaseURL))
   for a in html_code.findAll("a"):
@@ -99,7 +99,7 @@ proc checkStr(s, ss: string): bool =
 proc getMangaInfo(mangas: seq[string]): tuple[name: string, url: string] =
   # get user choice
   var 
-    choice = readLineFromStdin("nom du manga: ")
+    choice = readLineFromStdin("    nom du manga: ")
     manga_url: seq[tuple[name: string, url: string]]
   # get similar manga names and check with user's choice
   for manga in mangas:
@@ -108,11 +108,11 @@ proc getMangaInfo(mangas: seq[string]): tuple[name: string, url: string] =
         url = BaseURL&manga
         name = manga.decodeUrl
       name.removeSuffix('/')
-      echo name
+      echo "    - ", name
       manga_url.add((name: name,url: url))
   # if at least one match ask user
   if manga_url.len > 1:
-    choice = readLineFromStdin("Quel manga voulez-vous: ")
+    choice = readLineFromStdin("    Quel manga voulez-vous: ")
   for manga in manga_url:
     if choice == manga.name:
       return (manga.name, manga.url)
@@ -153,7 +153,7 @@ proc `*`(s: string, num: Natural): string {.noSideEffect} =
 
 # loading bar
 proc loading(min, max: uint) =
-  stdout.write "\rscan ", min,"/",max
+  stdout.write "\r    scan ", min,"/",max
   flushFile(stdout)
 
 # return the number of scans
@@ -167,7 +167,7 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
   let client = newHttpClient()
   let num_scans = getScansNumber(info.chap)
   var counter: uint = 0
-  echo "downlading scans..."
+  echo "    downlading scans..."
   for chapi in info.chap:
     for scan in chapi.url:
       let url = BaseURL&"/"&info.name&"/"&chapi.num&"/"&scan
@@ -220,4 +220,4 @@ proc main() =
 try:
   main()
 except CatchableError as e:
-  echo e.msg
+  echo "error: ", e.msg
