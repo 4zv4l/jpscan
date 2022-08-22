@@ -1,9 +1,18 @@
 import strutils, osproc, os, httpclient, rdstdin, htmlparser, xmltree, strtabs
 import unicode, uri
+import re
+import sequtils
 
 const BaseURL = "https://funquizzes.fun/uploads/manga/"
 
+proc clear() =
+  when defined(Windows):
+    discard execCmd("cls")
+  else:
+    discard execCmd("clear")
+
 proc showLogo() =
+  clear()
   echo "\e[33m"
   echo "          ██╗██████╗ ███████╗ ██████╗ █████╗ ███╗   ██╗██╗   ██╗███████╗"
   echo "          ██║██╔══██╗██╔════╝██╔════╝██╔══██╗████╗  ██║██║   ██║██╔════╝"
@@ -15,14 +24,12 @@ proc showLogo() =
   echo "\e[0m"
   echo "\n"
 
-proc clear() =
-  when defined(Windows):
-    discard execCmd("cls")
-  else:
-    discard execCmd("clear")
-
 proc getDest(): string =
   readLineFromStdin("    Chemin vers le dossier: ")
+
+proc getURLS(url: string, urls: seq[string]): seq[string] =
+  for u in urls:
+    result.add(url&"/"&u)
 
 # ask user for a folder to add/remove
 proc getFolder(path: string) =
@@ -52,6 +59,10 @@ proc getChoice(): uint =
   except:
     5
 
+proc menu(dest: string): uint =
+  showMenu(dest)
+  getChoice()
+
 # fetch every manga from the website
 proc fetchManga(): seq[string] =
   echo "Chargement des mangas disponibles..."
@@ -66,6 +77,13 @@ proc fetchChapi(url: string): seq[string] =
   for a in html_code.findAll("a"):
     result.add(a.attrs["href"])
 
+proc fetchScans(url: string): seq[string] =
+  var client = newHttpClient()
+  let html_code = parseHtml(client.getContent(url))
+  for a in html_code.findAll("a"):
+    if find(a.attrs["href"], re".jpg$") > 0:
+      result.add(a.attrs["href"])
+
 proc checkStr(s, ss: string): bool =
   let a = s.contains(ss) or ss.contains(s)
   let b = s.toLower.contains(ss.toLower) or s.toUpper.contains(ss.toUpper)
@@ -79,16 +97,15 @@ proc getMangaInfo(mangas: seq[string]): tuple[name: string, url: string] =
     manga_url: seq[tuple[name: string, url: string]]
   # get similar manga names and check with user's choice
   for manga in mangas:
-    if checkStr(manga, choice):
+    if checkStr(manga.decodeUrl, choice):
       var
-        url = "https://funquizzes.fun/uploads/manga/"&manga
+        url = BaseURL&manga
         name = manga.decodeUrl
       name.removeSuffix('/')
+      echo name
       manga_url.add((name: name,url: url))
   # if at least one match ask user
   if manga_url.len > 1:
-    for manga in manga_url:
-      echo manga.name
     choice = readLineFromStdin("Quel manga voulez-vous: ")
   for manga in manga_url:
     if choice == manga.name:
@@ -105,26 +122,40 @@ proc getChapiInfo(manga: tuple[name: string, url: string]): seq[string] =
       result.add(chapitre)
     except: discard
 
-proc getInfo(mangas: seq[string]): tuple[name: string, urls: seq[string]] =
+proc getScansInfo(manga: string, urls: seq[string], chap: seq[string]): seq[tuple[num: string, url: seq[string]]] =
+  echo "Chargement des scans disponibles pour ", manga
+  for idx, url in urls:
+    result.add((chap[idx], fetchScans(url)))
+
+proc getInfo(mangas: seq[string]): tuple[name: string, chap: seq[tuple[num: string, url: seq[string]]]] =
   let
     manga = getMangaInfo(mangas)
     chapi = getChapiInfo(manga)
-  return (manga.name, chapi)
-  # download all .jpg from the folder
-  # url = "https://funquizzes.fun/uploads/manga/{manga}/{chapi}/"
-  
+    mc    = getURLS(manga.url, chapi)
+    scans = getScansInfo(manga.name, mc, chapi)
+  return (manga.name, scans)
+
+proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[string]]]], dest: string) =
+  let client = newHttpClient()
+  echo "downlading scans..."
+  for chapi in info.chap:
+    for scan in chapi.url:
+      let url = BaseURL&"/"&info.name&"/"&chapi.num&"/"&scan
+      createDir(dest&"/"&info.name)
+      createDir(dest&"/"&info.name&"/"&chapi.num)
+      try:
+        client.downloadFile(url, dest&"/"&info.name&"/"&chapi.num&"/"&scan)
+      except CatchableError as e:
+        echo "=> ", url
+        echo e.msg
+        sleep(5000)
+  client.close()
 
 proc handle(c: uint, dest: string, mangas: seq[string]) =
   case(c):
     of 1: # download manga
-      let 
-        client = newHttpClient()
-        info = getInfo(mangas)
-      echo "=> ", info
-      quit 0
-      for url in info.urls:
-        client.downloadFile(url, dest&"/"&info.name&"/"&extractFilename(url))
-      client.close()
+      let info = getInfo(mangas)
+      download(info, dest)
     of 2: # add manga folder
       getFolder(dest)
       let folder = readLineFromStdin("    Dossier a creer: ")
@@ -140,22 +171,17 @@ proc handle(c: uint, dest: string, mangas: seq[string]) =
       sleep(1000)
 
 proc main() =
-  clear()
   showLogo()
-  let dest = getDest()
+  let 
+    dest = getDest()
+    mangas = fetchManga()
   var c: uint = 0
   while c != 4:
-    let mangas = fetchManga()
-    clear()
-    showMenu(dest)
-    c = getChoice()
+    c = menu(dest)
     try:
       handle(c, dest, mangas)
     except:
-      clear()
-      showLogo()
-      echo "error when handling your choice :)"
-      echo "going back to the menu"
+      echo "une erreur est survenue..."
       sleep(1500)
 
 try:
