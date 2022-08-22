@@ -1,7 +1,7 @@
-import strutils, osproc, os, httpclient, rdstdin, htmlparser, xmltree, strtabs
+import strutils, rdstdin, strtabs, re
+import httpclient, htmlparser, xmltree
+import os, osproc
 import unicode, uri
-import re
-import sequtils
 
 const BaseURL = "https://funquizzes.fun/uploads/manga/"
 
@@ -24,10 +24,12 @@ proc showLogo() =
   echo "\e[0m"
   echo "\n"
 
+# get destination folder for manga
 proc getDest(): string =
   readLineFromStdin("    Chemin vers le dossier: ")
 
-proc getURLS(url: string, urls: seq[string]): seq[string] =
+# concat urls
+proc concatURLS(url: string, urls: seq[string]): seq[string] =
   for u in urls:
     result.add(url&"/"&u)
 
@@ -59,6 +61,7 @@ proc getChoice(): uint =
   except:
     5
 
+# handle the menu
 proc menu(dest: string): uint =
   showMenu(dest)
   getChoice()
@@ -71,12 +74,14 @@ proc fetchManga(): seq[string] =
   for a in html_code.findAll("a"):
     result.add(a.attrs["href"])
 
+# fetch chapter from manga url
 proc fetchChapi(url: string): seq[string] =
   var client = newHttpClient()
   let html_code = parseHtml(client.getContent(url))
   for a in html_code.findAll("a"):
     result.add(a.attrs["href"])
 
+# fetch scans from chapter url
 proc fetchScans(url: string): seq[string] =
   var client = newHttpClient()
   let html_code = parseHtml(client.getContent(url))
@@ -84,6 +89,7 @@ proc fetchScans(url: string): seq[string] =
     if find(a.attrs["href"], re".jpg$") > 0:
       result.add(a.attrs["href"])
 
+# check str to see if they are similar
 proc checkStr(s, ss: string): bool =
   let a = s.contains(ss) or ss.contains(s)
   let b = s.toLower.contains(ss.toLower) or s.toUpper.contains(ss.toUpper)
@@ -112,6 +118,7 @@ proc getMangaInfo(mangas: seq[string]): tuple[name: string, url: string] =
       return (manga.name, manga.url)
   raise
 
+# get chapter by manga
 proc getChapiInfo(manga: tuple[name: string, url: string]): seq[string] =
   echo "Chargement des chapitres disponibles pour ", manga.name
   var chapitres = fetchChapi(manga.url)
@@ -122,19 +129,22 @@ proc getChapiInfo(manga: tuple[name: string, url: string]): seq[string] =
       result.add(chapitre)
     except: discard
 
+# get scans by chapters
 proc getScansInfo(manga: string, urls: seq[string], chap: seq[string]): seq[tuple[num: string, url: seq[string]]] =
   echo "Chargement des scans disponibles pour ", manga
   for idx, url in urls:
     result.add((chap[idx], fetchScans(url)))
 
+# get info such as manga name, chapters number and scans number (images)
 proc getInfo(mangas: seq[string]): tuple[name: string, chap: seq[tuple[num: string, url: seq[string]]]] =
   let
     manga = getMangaInfo(mangas)
     chapi = getChapiInfo(manga)
-    mc    = getURLS(manga.url, chapi)
+    mc    = concatURLS(manga.url, chapi)
     scans = getScansInfo(manga.name, mc, chapi)
   return (manga.name, scans)
 
+# download each scan to the destination folder
 proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[string]]]], dest: string) =
   let client = newHttpClient()
   echo "downlading scans..."
@@ -151,6 +161,7 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
         sleep(5000)
   client.close()
 
+# handle user's choice
 proc handle(c: uint, dest: string, mangas: seq[string]) =
   case(c):
     of 1: # download manga
