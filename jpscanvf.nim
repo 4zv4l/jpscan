@@ -165,6 +165,7 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
 proc handle(c: uint, dest: string, mangas: seq[string]) =
   case(c):
     of 1: # download manga
+      createDir(dest)
       let info = getInfo(mangas)
       download(info, dest)
     of 2: # add manga folder
@@ -183,9 +184,8 @@ proc handle(c: uint, dest: string, mangas: seq[string]) =
 
 proc main() =
   showLogo()
-  let 
-    dest = getDest()
-    mangas = fetchManga()
+  let dest = getDest()
+  let mangas = try: fetchManga() except: @[]
   var c: uint = 0
   while c != 4:
     c = menu(dest)
