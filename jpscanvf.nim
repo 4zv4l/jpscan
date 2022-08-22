@@ -144,9 +144,29 @@ proc getInfo(mangas: seq[string]): tuple[name: string, chap: seq[tuple[num: stri
     scans = getScansInfo(manga.name, mc, chapi)
   return (manga.name, scans)
 
+# multiply string
+proc `*`(s: string, num: Natural): string {.noSideEffect} =
+  var res = newStringOfCap(s.len * num)
+  for i in 0..num:
+    res.add(s)
+  return res
+
+# loading bar
+proc loading(min, max: uint) =
+  stdout.write "\rscan ", min,"/",max
+  flushFile(stdout)
+
+# return the number of scans
+proc getScansNumber(chap: seq[tuple[num: string, url: seq[string]]]): uint =
+  for chaps in chap:
+    for scan in chaps.url:
+      result += 1
+
 # download each scan to the destination folder
 proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[string]]]], dest: string) =
   let client = newHttpClient()
+  let num_scans = getScansNumber(info.chap)
+  var counter: uint = 0
   echo "downlading scans..."
   for chapi in info.chap:
     for scan in chapi.url:
@@ -159,6 +179,8 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
         echo "=> ", url
         echo e.msg
         sleep(5000)
+      counter += 1
+      loading(counter, num_scans)
   client.close()
 
 # handle user's choice
