@@ -167,7 +167,7 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
   let client = newHttpClient()
   let num_scans = getScansNumber(info.chap)
   var counter: uint = 0
-  echo "    downlading scans..."
+  echo "    telechargement des scans..."
   for chapi in info.chap:
     for scan in chapi.url:
       let url = BaseURL&"/"&info.name&"/"&chapi.num&"/"&scan
@@ -178,7 +178,7 @@ proc download(info: tuple[name: string, chap: seq[tuple[num: string, url: seq[st
       except CatchableError as e:
         echo "=> ", url
         echo e.msg
-        sleep(5000)
+        sleep(2000)
       counter += 1
       loading(counter, num_scans)
   client.close()
@@ -201,7 +201,7 @@ proc handle(c: uint, dest: string, mangas: seq[string]) =
     of 4:
       echo "au revoir :3"
     else:
-      echo "wrong choice..."
+      echo "mauvais choix..."
       sleep(1000)
 
 proc main() =
@@ -220,4 +220,4 @@ proc main() =
 try:
   main()
 except CatchableError as e:
-  echo "error: ", e.msg
+  echo "erreur: ", e.msg
