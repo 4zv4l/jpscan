@@ -2,9 +2,12 @@ import strutils, rdstdin, strtabs
 import htmlparser, xmltree, puppy
 import os, terminal
 import unicode, uri
+import sequtils
 
 # default target Url
 var BaseURL = "https://funquizzes.fun/uploads/manga/"
+# default extension to look for
+var Extension = ".jpg"
 # array of available Mangas
 var Mangas: seq[string]
 
@@ -52,9 +55,10 @@ proc getFolder(path: string) =
 # handle the menu
 proc menu(dest: string): uint =
   showLogo()
-  echo "    Database loaded: ", Mangas.len > 0
-  echo "    Download url   : ", BaseURL
-  echo "    Current content: ", dest
+  echo "    Database loaded  : ", Mangas.len > 0
+  echo "    Download url     : ", BaseURL
+  echo "    Scan Extension   : ", Extension
+  echo "    Current content  : ", dest
   getFolder(dest)
   echo "    *................................*"
   echo:
@@ -109,6 +113,10 @@ proc fetchUrlListing(url: string): seq[string] =
     if entry in ["Name", "Last modified", "Size", "Description", "Parent Directory"]:
       echo entry
       continue
+    elif entry.contains(Extension):
+      result.add(BaseURL&url&entry)
+    else:
+      result = concat(result, fetchUrlListing(url&entry))
 
 # find all .jpg from arborescence
 # TODO: loop through all the arborescence of the web server
@@ -116,15 +124,14 @@ proc fetchUrlListing(url: string): seq[string] =
 # TODO: wait for issue80 to be fixed
 # ' ' are replaced by '+'
 # https://github.com/treeform/puppy/issues/80
-proc findAll(manga: string, extension: string): seq[string] =
-  echo fetchUrlListing(manga)
-  return @["none"]
+proc findAll(manga: string): seq[string] =
+  return fetchUrlListing(manga)
 
 # get info such as manga name, chapters number and scans number (images)
 proc getInfo(): seq[string] =
   if Mangas.len == 0: fetchManga()
   let manga = getManga()
-  let urls = findAll(manga, ".jpg")
+  let urls = findAll(manga)
   sleep(5000)
   return @["None"]
 
@@ -173,17 +180,17 @@ proc handle(c: uint, dest: string) =
 
 # allow to change the default
 # target url
-proc loadConfig(): string =
+proc loadConfig(): (string, string) =
   let path =  getHomeDir()&".jpscanrc"
   if fileExists(path):
     let f = open(path)
     defer: f.close()
-    return f.readLine()
-  return "https://funquizzes.fun/uploads/manga/"
+    return (f.readLine(), f.readline())
+  return (BaseURL, Extension)
 
 proc main() =
   showLogo()
-  BaseURL = loadConfig()
+  (BaseURL, Extension) = loadConfig()
   let dest = getDest()
   var choice: uint = 0
   while choice != 5:
