@@ -105,8 +105,12 @@ proc getManga(): string =
     if manga == m: return manga
   raise
 
-# list all entry from url (directories and files)
-proc fetchUrlListing(url: string): seq[string] =
+# loop through all the arborescence of the web server
+# to find the .extension files
+proc findAllUrls(url: string): seq[string] =
+  # TODO: wait for issue80 to be fixed
+  # ' ' are replaced by '+'
+  # https://github.com/treeform/puppy/issues/80
   let html_code = parseHtml(fetch(BaseURL&url))
   for a in html_code.findAll("a"):
     let entry = innerText(a)
@@ -116,22 +120,13 @@ proc fetchUrlListing(url: string): seq[string] =
     elif entry.contains(Extension):
       result.add(BaseURL&url&entry)
     else:
-      result = concat(result, fetchUrlListing(url&entry))
-
-# find all .jpg from arborescence
-# TODO: loop through all the arborescence of the web server
-# to find the .extension files
-# TODO: wait for issue80 to be fixed
-# ' ' are replaced by '+'
-# https://github.com/treeform/puppy/issues/80
-proc findAll(manga: string): seq[string] =
-  return fetchUrlListing(manga)
+      result = concat(result, findAllUrls(url&entry))
 
 # get info such as manga name, chapters number and scans number (images)
 proc getInfo(): seq[string] =
   if Mangas.len == 0: fetchManga()
   let manga = getManga()
-  let urls = findAll(manga)
+  let urls = findAllUrls(manga)
   sleep(5000)
   return @["None"]
 
