@@ -8,8 +8,8 @@ import sequtils
 var BaseURL = "https://funquizzes.fun/uploads/manga/"
 # default extension to look for
 var Extension = ".jpg"
-# array of available Mangas
-var Mangas: seq[string]
+# array of available Files
+var Files: seq[string]
 
 # check for string in array of string
 proc `in`(s: string, t: seq[string]): bool =
@@ -34,10 +34,11 @@ proc showLogo() =
   echo "    ╚█████╔╝██║     ███████║╚██████╗██║  ██║██║ ╚████║"
   echo "     ╚════╝ ╚═╝     ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝"
   echo "     A non official App - Just made by someone for fun"
+  echo "              by default to download scan             "
   echo "\e[0m"
-  echo "\n"
+  echo ""
 
-# get destination folder for manga
+# get destination folder for files
 proc getDest(): string =
   readLineFromStdin("    Path to the folder: ")
 
@@ -55,38 +56,38 @@ proc getFolder(path: string) =
 # handle the menu
 proc menu(dest: string): uint =
   showLogo()
-  echo "    Database loaded  : ", Mangas.len > 0
+  echo "    Database loaded  : ", Files.len > 0
   echo "    Download url     : ", BaseURL
   echo "    Scan Extension   : ", Extension
   echo "    Current content  : ", dest
   getFolder(dest)
   echo "    *................................*"
   echo:
-    let a = "    1. \e[33mDownload a manga"
+    let a = "    1. \e[33mDownload a file"
     let b = "      (load db)\e[0m"
-    if Mangas.len > 0: a
+    if Files.len > 0: a
     else: a & b
   echo:
-    let c = "    2. \e[34mShow available mangas"
+    let c = "    2. \e[34mShow available files"
     let d = " (load db)\e[0m"
-    if Mangas.len > 0: c
+    if Files.len > 0: c
     else: c & d
-  echo "    3. \e[32mCreate a manga folder\e[0m"
-  echo "    4. \e[31mDelete a manga folder\e[0m"
-  echo "    5. Quitter"
+  echo "    3. \e[32mCreate a folder\e[0m"
+  echo "    4. \e[31mDelete a folder\e[0m"
+  echo "    5. Quit"
   try:
     readLineFromStdin("    Your choice: ").parseUInt()
   except:
     6
 
-# fetch all the manga from the website
-proc fetchManga() =
-  echo "    fetching manga...(this could take a while)"
+# fetch all the root folders from the website
+proc fetchFile() =
+  echo "    fetching root directory...(this could take a while)"
   let html_code = parseHtml(fetch(BaseURL))
   for a in html_code.findAll("a"):
-    var manga = a.attrs["href"].decodeUrl
-    manga.removeSuffix('/')
-    Mangas.add(manga)
+    var rootDir = a.attrs["href"].decodeUrl
+    rootDir.removeSuffix('/')
+    Files.add(rootDir)
 
 # check str to see if they are similar
 proc checkStr(s, ss: string): bool =
@@ -94,15 +95,15 @@ proc checkStr(s, ss: string): bool =
   let b = s.toLower.contains(ss.toLower) or s.toUpper.contains(ss.toUpper)
   a or b
 
-# ask for a manga to the user
-proc getManga(): string =
-  let choice = readLineFromStdin("    search manga: ")
-  for manga in Mangas:
-    if checkStr(choice, manga):
-      echo "    - ", manga
-  let manga = readLineFromStdin("    which manga: ")
-  for m in Mangas:
-    if manga == m: return manga
+# ask for a file to the user
+proc getFile(): string =
+  let choice = readLineFromStdin("    search file: ")
+  for file in Files:
+    if checkStr(choice, file):
+      echo "    - ", file
+  let file = readLineFromStdin("    which file: ")
+  for m in Files:
+    if file == m: return file
   raise
 
 # loop through all the arborescence of the web server
@@ -122,13 +123,12 @@ proc findAllUrls(url: string): seq[string] =
     else:
       result = concat(result, findAllUrls(url&entry))
 
-# get info such as manga name, chapters number and scans number (images)
+# get info from user to know which files download
 proc getInfo(): seq[string] =
-  if Mangas.len == 0: fetchManga()
-  let manga = getManga()
-  let urls = findAllUrls(manga)
-  sleep(5000)
-  return @["None"]
+  if Files.len == 0: fetchFile()
+  let file = getFile()
+  let urls = findAllUrls(file)
+  return urls
 
 # loading bar
 proc loading(min, max: int) =
@@ -150,20 +150,20 @@ proc download(urls: seq[string], dest: string) =
 # handle user's choice
 proc handle(c: uint, dest: string) =
   case(c):
-    of 1: # download manga
+    of 1: # download file
       createDir(dest)
       let urls = getInfo()
       download(urls, dest)
-    of 2: # show available mangas
-      if Mangas.len == 0: fetchManga()
-      for manga in Mangas:
-        echo "    - ", manga
+    of 2: # show available files
+      if Files.len == 0: fetchFile()
+      for file in Files:
+        echo "    - ", file
       discard readLineFromStdin("    Press Enter to continue")
-    of 3: # add manga folder
+    of 3: # add a folder
       getFolder(dest)
       let folder = readLineFromStdin("    Directory to create: ")
       createDir(dest&"/"&folder)
-    of 4: # remove manga folder
+    of 4: # remove a folder
       getFolder(dest)
       let folder = readLineFromStdin("    Directory to delete: ")
       removeDir(dest&"/"&folder)
