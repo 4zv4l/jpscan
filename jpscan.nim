@@ -127,6 +127,7 @@ proc findAllUrls(url: string): seq[string] =
 proc getInfo(): seq[string] =
   if Files.len == 0: fetchFile()
   let file = getFile()
+  echo "    finding scans...(this could also take a while)"
   let urls = findAllUrls(file)
   return urls
 
