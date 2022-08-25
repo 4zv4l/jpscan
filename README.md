@@ -8,5 +8,5 @@ jpscan in nim
 ## Compile
 `nim c -d:release jpscanvf.nim`
 
-- [ ] Wait for [issue](https://github.com/treeform/puppy/issues/80)
-- [ ] Release coming soon
+- [X] Wait for [issue](https://github.com/treeform/puppy/issues/80)
+- [X] Release coming soon
