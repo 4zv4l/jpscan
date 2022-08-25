@@ -1,21 +1,15 @@
 import strutils, rdstdin, strtabs
 import htmlparser, xmltree, puppy
-import os, terminal
+import os
 import unicode, uri
 import sequtils
 
 # default target Url
 var BaseURL = "https://funquizzes.fun/uploads/manga/"
 # default extension to look for
-var Extension = ".jpg"
+var Extension = @[".jpg", ".png"]
 # array of available Files
 var Files: seq[string]
-
-# check for string in array of string
-proc `in`(s: string, t: seq[string]): bool =
-  for ss in t:
-    if s == ss: return true
-  return false
 
 # clear the screen
 proc clear() =
@@ -38,6 +32,11 @@ proc showLogo() =
   echo "\e[0m"
   echo ""
 
+proc contains(s: string, exts: seq[string]): bool =
+  for ext in exts:
+    if s.contains(ext): return true
+  return false
+
 # get destination folder for files
 proc getDest(): string =
   readLineFromStdin("    Path to the folder: ")
@@ -58,20 +57,23 @@ proc menu(dest: string): uint =
   showLogo()
   echo "    Database loaded  : ", Files.len > 0
   echo "    Download url     : ", BaseURL
-  echo "    Scan Extension   : ", Extension
+  echo:
+    let a = "    Scan Extension   : "
+    let b = Extension.join(" ")
+    a & b
   echo "    Current content  : ", dest
   getFolder(dest)
   echo "    *................................*"
   echo:
-    let a = "    1. \e[33mDownload a file"
-    let b = "      (load db)\e[0m"
-    if Files.len > 0: a
-    else: a & b
-  echo:
-    let c = "    2. \e[34mShow available files"
-    let d = " (load db)\e[0m"
+    let c = "    1. \e[33mDownload a file"
+    let d = "      (load db)\e[0m"
     if Files.len > 0: c
     else: c & d
+  echo:
+    let e = "    2. \e[34mShow available files"
+    let f = " (load db)\e[0m"
+    if Files.len > 0: e
+    else: e & f
   echo "    3. \e[32mCreate a folder\e[0m"
   echo "    4. \e[31mDelete a folder\e[0m"
   echo "    5. Quit"
@@ -109,19 +111,17 @@ proc getFile(): string =
 # loop through all the arborescence of the web server
 # to find the .extension files
 proc findAllUrls(url: string): seq[string] =
-  # TODO: wait for issue80 to be fixed
-  # ' ' are replaced by '+'
-  # https://github.com/treeform/puppy/issues/80
   let html_code = parseHtml(fetch(BaseURL&url))
   for a in html_code.findAll("a"):
     let entry = innerText(a)
     if entry in ["Name", "Last modified", "Size", "Description", "Parent Directory"]:
-      echo entry
       continue
     elif entry.contains(Extension):
       result.add(BaseURL&url&entry)
     else:
-      result = concat(result, findAllUrls(url&entry))
+      try:
+        result = concat(result, findAllUrls(url&"/"&entry))
+      except: discard
 
 # get info from user to know which files download
 proc getInfo(): seq[string] =
@@ -143,7 +143,9 @@ proc dl(url, filename: string) =
 # download urls given in argument
 proc download(urls: seq[string], dest: string) =
   for idx, url in urls:
-    let filename = dest&url[BaseURL.len..<url.len]
+    let filename = dest&"/"&url[BaseURL.len..<url.len]
+    let dirs = filename.splitFile
+    createDir(dirs.dir)
     dl(url, filename)
     loading(idx+1, urls.len)
 
@@ -175,12 +177,16 @@ proc handle(c: uint, dest: string) =
 
 # allow to change the default
 # target url
-proc loadConfig(): (string, string) =
+proc loadConfig(): (string, seq[string]) =
   let path =  getHomeDir()&".jpscanrc"
   if fileExists(path):
     let f = open(path)
     defer: f.close()
-    return (f.readLine(), f.readline())
+    var url = f.readline()
+    if url == "": url = BaseURL
+    var ext = f.readline().split(" ")
+    if ext[0] == "": ext = Extension
+    return (url, ext)
   return (BaseURL, Extension)
 
 proc main() =
@@ -192,7 +198,8 @@ proc main() =
     choice = menu(dest)
     try:
       handle(choice, dest)
-    except:
+    except CatchableError as e:
+      echo e.msg
       echo "an error occured..."
       sleep(2000)
 
