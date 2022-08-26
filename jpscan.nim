@@ -215,10 +215,10 @@ proc main() =
       handle(choice, dest)
     except CatchableError as e:
       echo e.msg
-      echo "an error occured..."
+      echo "    an error occured..."
       sleep(2000)
 
 try:
   main()
 except CatchableError as e:
-  echo "error: ", e.msg
+  echo "    unrecoverable error: ", e.msg
