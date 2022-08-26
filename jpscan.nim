@@ -222,3 +222,4 @@ try:
   main()
 except CatchableError as e:
   echo "    unrecoverable error: ", e.msg
+  quit 1
