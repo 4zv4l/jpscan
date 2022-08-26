@@ -74,13 +74,14 @@ proc menu(dest: string): uint =
     let f = " (load db)\e[0m"
     if Files.len > 0: e & "\e[0m"
     else: e & f
-  echo "    3. \e[32mCreate a folder\e[0m"
-  echo "    4. \e[31mDelete a folder\e[0m"
-  echo "    5. Quit"
+  echo "    3. \e[35mChange destination folder\e[0m"
+  echo "    4. \e[32mCreate a folder\e[0m"
+  echo "    5. \e[31mDelete a folder\e[0m"
+  echo "    6. Quit"
   try:
     readLineFromStdin("    Your choice: ").parseUInt()
   except:
-    6
+    7
 
 # fetch all the root folders from the website
 proc fetchFile() =
@@ -160,7 +161,7 @@ proc download(urls: seq[string], dest: string) =
     loading(idx+1, urls.len)
 
 # handle user's choice
-proc handle(c: uint, dest: string) =
+proc handle(c: uint, dest: var string) =
   case(c):
     of 1: # download file
       createDir(dest)
@@ -172,15 +173,17 @@ proc handle(c: uint, dest: string) =
       for file in Files:
         echo "    - ", file
       discard readLineFromStdin("    Press Enter to continue")
-    of 3: # add a folder
+    of 3:
+      dest = getDest()
+    of 4: # add a folder
       getFolder(dest)
       let folder = readLineFromStdin("    Directory to create: ")
       createDir(dest&"/"&folder)
-    of 4: # remove a folder
+    of 5: # remove a folder
       getFolder(dest)
       let folder = readLineFromStdin("    Directory to delete: ")
       removeDir(dest&"/"&folder)
-    of 5:
+    of 6:
       echo "bye-bye :3"
     else:
       echo "bad choice..."
@@ -203,9 +206,10 @@ proc loadConfig(): (string, seq[string]) =
 proc main() =
   showLogo()
   (BaseURL, Extension) = loadConfig()
-  let dest = getDest()
-  var choice: uint = 0
-  while choice != 5:
+  var
+    dest = getDest()
+    choice: uint = 0
+  while choice != 6:
     choice = menu(dest)
     try:
       handle(choice, dest)
