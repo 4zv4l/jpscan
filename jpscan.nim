@@ -100,13 +100,18 @@ proc checkStr(s, ss: string): bool =
 # ask for a file to the user
 proc getFile(): string =
   let choice = readLineFromStdin("    search file: ")
+  var counter = 0
   for file in Files:
     if checkStr(choice, file):
+      counter += 1
       echo "    - ", file
+  if counter == 0: return ""
   let file = readLineFromStdin("    which file: ")
   for m in Files:
     if file == m: return file
-  raise
+  echo "    not a good choice.."
+  sleep(1000)
+  return ""
 
 # loop through all the arborescence of the web server
 # to find the .extension files
@@ -127,6 +132,10 @@ proc findAllUrls(url: string): seq[string] =
 proc getInfo(): seq[string] =
   if Files.len == 0: fetchFile()
   let file = getFile()
+  if file == "":
+    echo "    no file found..."
+    sleep(2000)
+    return @[]
   echo "    finding scans...(this could also take a while)"
   let urls = findAllUrls(file)
   return urls
@@ -156,6 +165,7 @@ proc handle(c: uint, dest: string) =
     of 1: # download file
       createDir(dest)
       let urls = getInfo()
+      if urls.len == 0: return
       download(urls, dest)
     of 2: # show available files
       if Files.len == 0: fetchFile()
