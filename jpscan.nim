@@ -67,12 +67,12 @@ proc menu(dest: string): uint =
   echo:
     let c = "    1. \e[33mDownload a file"
     let d = "      (load db)\e[0m"
-    if Files.len > 0: c
+    if Files.len > 0: c & "\e[0m"
     else: c & d
   echo:
     let e = "    2. \e[34mShow available files"
     let f = " (load db)\e[0m"
-    if Files.len > 0: e
+    if Files.len > 0: e & "\e[0m"
     else: e & f
   echo "    3. \e[32mCreate a folder\e[0m"
   echo "    4. \e[31mDelete a folder\e[0m"
