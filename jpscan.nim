@@ -184,9 +184,9 @@ proc handle(c: uint, dest: var string) =
       let folder = readLineFromStdin("    Directory to delete: ")
       removeDir(dest&"/"&folder)
     of 6:
-      echo "bye-bye :3"
+      echo "    bye-bye :3"
     else:
-      echo "bad choice..."
+      echo "    bad choice..."
       sleep(1000)
 
 # allow to change the default
