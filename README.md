@@ -6,7 +6,7 @@ jpscan in nim
 > Inspired by [SaigoNoo/jpscanvf](https://github.com/SaigoNoo/jpscanvf)
 
 ## Compile
-`nimble install puppy`
+`nimble install puppy`  
 `nim c -d:release --opt:size jpscan.nim`
 
 ## Configuration
