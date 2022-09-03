@@ -41,9 +41,9 @@ proc contains(s: string, exts: seq[string]): bool =
 template getDest(): string =
   readLineFromStdin("    Path to the folder: ")
 
-# show folders from 'dest' folder
-proc getFolder(path: string) =
-  for kind, path in walkDir(path):
+# show folders inside the dest folder
+template getFolder(dest: string) =
+  for kind, path in walkDir(dest):
     case kind:
       of pcDir:
         let fn = extractFilename(path)
