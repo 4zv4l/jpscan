@@ -37,7 +37,7 @@ proc contains(s: string, exts: seq[string]): bool =
     if s.contains(ext): return true
   return false
 
-# get deError: cannot use symbol of kind 'param' as a 'forVar'stination folder for files
+# get destination folder
 template getDest(): string =
   readLineFromStdin("    Path to the folder: ")
 
