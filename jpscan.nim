@@ -37,11 +37,11 @@ proc contains(s: string, exts: seq[string]): bool =
     if s.contains(ext): return true
   return false
 
-# get destination folder for files
-proc getDest(): string =
+# get deError: cannot use symbol of kind 'param' as a 'forVar'stination folder for files
+template getDest(): string =
   readLineFromStdin("    Path to the folder: ")
 
-# ask user for a folder to add/remove
+# show folders from 'dest' folder
 proc getFolder(path: string) =
   for kind, path in walkDir(path):
     case kind:
@@ -93,7 +93,7 @@ proc fetchFile() =
     Files.add(rootDir)
 
 # check str to see if they are similar
-proc checkStr(s, ss: string): bool =
+template checkStr(s, ss: string): bool =
   let a = s.contains(ss) or ss.contains(s)
   let b = s.toLower.contains(ss.toLower) or s.toUpper.contains(ss.toUpper)
   a or b
@@ -142,7 +142,7 @@ proc getInfo(): seq[string] =
   return urls
 
 # loading bar
-proc loading(min, max: int) =
+template loading(min, max: int) =
   stdout.write "\r    scan ", min,"/",max
   flushFile(stdout)
 
