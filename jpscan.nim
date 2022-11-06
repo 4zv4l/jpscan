@@ -120,7 +120,8 @@ proc findAllUrls(url: string): seq[string] =
   let html_code = parseHtml(fetch(BaseURL&url))
   for a in html_code.findAll("a"):
     let entry = innerText(a)
-    if entry in ["Name", "Last modified", "Size", "Description", "Parent Directory"]:
+    if entry in ["Name", "Last modified",
+      "Size", "Description", "Parent Directory"]:
       continue
     elif entry.contains(Extension):
       result.add(BaseURL&url&entry)
@@ -218,6 +219,7 @@ proc main() =
       echo "    an error occured..."
       sleep(2000)
 
+# run the main function catching all possible errors
 try:
   main()
 except CatchableError as e:
