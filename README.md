@@ -25,4 +25,4 @@ https://funquizzes.fun/uploads/manga/
 
 # TODO
 - [X] Wait for [issue](https://github.com/treeform/puppy/issues/80)
-- [X] Release coming soon
+- [ ] Proper config system
